@@ -1,6 +1,8 @@
 use  user_engagement;
 select * from events;
-#weekly user engagement
+
+#WEEKLY USER ENGAGEMENT:
+#SOL-1:
 SELECT 
     COUNT(event_name) AS engagement_cnt,
     WEEK(occurred_at) AS week_num
@@ -9,12 +11,7 @@ FROM
 WHERE
     event_type != 'signup_flow'
     group by week_num order by engagement_cnt desc;
-    
-    
-    
-    
-    
- #alternate sol-1
+#SOL-2:
  select *,
 new_user_activated-lag(new_user_activated) over( order by year_,quarter_ ) as user_growth
 from(select year(created_at) as year_,quarter(created_at) as quarter_,count(user_id) as new_user_activated 
@@ -22,9 +19,8 @@ from users
 where 
 activated_at is not null and state= "active"
 group by 1,2)a ;
-
  
-#user growth for product monthly
+#MONTHLY USER GROWTH FOR PRODUCT
 with cte as(
 SELECT 
     COUNT(user_id) AS users_created,
@@ -37,25 +33,7 @@ FROM
 )
 select quarter_of_the_yr,month_of_the_yr,users_created,users_created-LAG(users_created) over() as usr_growth_metrics from cte;
 
-# weekly retention cohort analysis:
-
-select *,
-timestampdiff(week,u.activated_at,e.occurred_at) as tymstamp from users u
-join events e
-on u.user_id=e.user_id
-where e.event_name="login"
-order by tymstamp;
-
-select count(*) as activated_usrs_count , week(u.activated_at) as activated_week , year(u.activated_at) as yr_activated,
-timestampdiff(week,u.activated_at,e.occurred_at) as tymstamp
-from users u
-join events e
-on u.user_id=e.user_id
-group by tymstamp,yr_activated, activated_week having tymstamp=1
-order by activated_week
-;
-select * from events;
-
+#WEEKLY RETENTION COHORT ANALYSIS:
 select a.activated_at,b.occurred_at,
 count(distinct a.user_id) as cohort_retained,
 timestampdiff(week,a.activated_at,b.occurred_at) as week_period
@@ -82,7 +60,7 @@ inner join
  on a.user_id=b.user_id
 group by 1) c;
 
-# weekly retention cohort analysis:
+#WEEKLY RETENTION COHORT ANALYSIS:
 SELECT first AS "Week Numbers",
 SUM(CASE WHEN week_number = 0 THEN 1 ELSE 0 END) AS "Week 17", 
 SUM(CASE WHEN week_number = 1 THEN 1 ELSE 0 END) AS "Week 18",
@@ -116,7 +94,8 @@ where event_type !="signup_flow" and event_name= "login"
 group by Week_of_year,device
 order by engagement_per_user desc;
 
-#weekly engagement per device
+#WEEKLY ENGAGEMENT PER DEVICE:
+#SOL-1:
 with cte as(
 select device,count(device) as device_used_per_week, count(distinct user_id) as engagement_per_user , 
 week(occurred_at) as Week_of_year from events 
@@ -128,8 +107,7 @@ select device, avg(device_used_per_week) as avg_device_usage_weekly ,
 avg(engagement_per_user) as avg_engagement_user_weekly from cte
 group by device;
 
-# Other way using sub query
-
+#SOL-2: USING SUBQUERY
 Select
 device_name,
 avg(num_users_using_device) as avg_weekly_users,
@@ -145,7 +123,7 @@ group by 1,2
 order by 1) a
 group by 1;
 
-#email engagement metrics:
+#EMAIL ENGAGEMENT METRICS:
 Select
 week,
 num_users,
@@ -162,5 +140,3 @@ sum(if(action='email_clickthrough',1,0)) as time_email_clickthrough
 from email_events  
 group by 1 
 order by 1) a;
-
-
